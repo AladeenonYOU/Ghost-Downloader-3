@@ -10,7 +10,7 @@ import m3u8
 from loguru import logger
 from mpegdash.parser import MPEGDASHParser
 
-from app.client import buildClient, toEmulation
+from app.client import buildClient, isLoopbackUrl, toEmulation
 from app.config.cfg import cfg
 from app.i18n import N
 
@@ -57,7 +57,8 @@ class M3U8Parser(TaskParser):
             )
             client = buildClient(emulation=emulation, headers=headers,
                                  userAgent=options.userAgent or None,
-                                 sourceUserAgent=options.sourceUserAgent)
+                                 sourceUserAgent=options.sourceUserAgent,
+                                 shouldUseProxy=not isLoopbackUrl(url))
             try:
                 response = await client.get(url)
                 response.raise_for_status()
@@ -90,7 +91,8 @@ class M3U8Parser(TaskParser):
                             options.clientProfile or cfg.clientProfile.value,
                             options.sourceUserAgent,
                         ), headers=headers, userAgent=options.userAgent or None,
-                            sourceUserAgent=options.sourceUserAgent)
+                            sourceUserAgent=options.sourceUserAgent,
+                            shouldUseProxy=not isLoopbackUrl(variantUrl))
                         try:
                             variantResponse = await variantClient.get(variantUrl)
                             variantResponse.raise_for_status()

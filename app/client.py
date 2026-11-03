@@ -5,6 +5,7 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 import certifi
 from loguru import logger
@@ -95,6 +96,11 @@ def matchIdentityPreset(host: str) -> dict | None:
     return None
 
 
+def isLoopbackUrl(url: str) -> bool:
+    host = (urlparse(str(url or "").strip()).hostname or "").lower()
+    return host in {"127.0.0.1", "localhost", "::1", "0.0.0.0"}
+
+
 def buildClient(
     *,
     emulation: Emulation | None = ...,
@@ -104,6 +110,7 @@ def buildClient(
     timeout: int | None = None,
     readTimeout: int | None = None,
     shouldVerifySsl: bool | None = None,
+    shouldUseProxy: bool = True,
 ) -> Client:
     resolved = toEmulation("") if emulation is ... else emulation
     if shouldVerifySsl is None:
@@ -116,7 +123,7 @@ def buildClient(
     if cfg.shouldUseSystemDns.value:
         config["dns_options"] = DnsOptions(system_dns=True)
 
-    url = proxy()
+    url = proxy() if shouldUseProxy else None
     if url:
         config["proxies"] = [Proxy.all(url)]
 

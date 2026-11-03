@@ -232,8 +232,10 @@ class M3U8TaskStep(TaskStep):
         if self.shouldOmitDateInfo:
             args.append("--no-date-info=true")
 
+        from app.client import isLoopbackUrl
         from app.config.cfg import proxy
-        proxyUrl = proxy()
+        # 本地中转（127.0.0.1）不能走代理：代理会把回环地址当成远端去连，直接 502
+        proxyUrl = None if isLoopbackUrl(self.task.url) else proxy()
         if proxyUrl and proxyUrl.startswith("socks5h://"):
             proxyUrl = "socks5://" + proxyUrl[len("socks5h://"):]
         args.append("--use-system-proxy=false")
